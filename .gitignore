@@ -205,3 +205,35 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Docker-related
+*.log
+docker-compose.override.yml
+.docker/
+.dockerignore
+Dockerfile.*
+
+# Docker volumes (caso montados localmente)
+volumes/
+*.pid
+
+# Evita versionar o build local (caso use bind mounts)
+build/
+tmp/
+cache/
+
+# Arquivos de ambiente sensíveis
+.env
+.env.*
+
+# Evita salvar imagens baixadas/construídas
+*.tar
+*.img
+
+# Outros comuns
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+node_modules/
+dist/
