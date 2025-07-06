@@ -1,6 +1,10 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import pytest
 from unittest.mock import patch
-from app import app
+from app.app import app
 
 @pytest.fixture
 def client():
@@ -8,7 +12,7 @@ def client():
     with app.test_client() as client:
         yield client
 
-@patch('app.salvar_log')
+@patch('app.app.salvar_log')
 def test_log_endpoint(mock_salvar_log, client):
     mock_salvar_log.return_value = 'abc123'
     
@@ -19,7 +23,7 @@ def test_log_endpoint(mock_salvar_log, client):
     }
 
     response = client.post('/log', json=payload)
-    assert response.status_code == 200
+    assert response.status_code == 201
     assert response.json['doc_id'] == 'abc123'
     assert response.json['message'] == 'Log salvo com sucesso'
     mock_salvar_log.assert_called_once_with(payload)
