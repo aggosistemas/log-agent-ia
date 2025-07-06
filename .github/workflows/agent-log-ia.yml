@@ -1,42 +1,94 @@
-name: Build e Deploy no GKE - Agent Log IA
+name: CI/CD Pipeline para Log Agent
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  CLUSTER_NAME: cluster-kubernetes-padrao
-  CLUSTER_REGION: us-central1
-  DOCKER_IMAGE: aggosistemas/log-agent-backend
+  IMAGE_NAME: log-agent-backend
+  DOCKER_HUB_REPO: ${{ secrets.DOCKER_HUB_USERNAME }}/log-agent-backend
 
 jobs:
-  build-and-deploy:
-    name: Build Docker e Deploy no GKE
+  test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Configurar Docker para Docker Hub
-        run: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
-      - name: Build da imagem
+      - name: Instalar dependências
         run: |
-          docker build -t $DOCKER_IMAGE:latest .
-          docker push $DOCKER_IMAGE:latest
+          pip install --upgrade pip
+          pip install --upgrade setuptools wheel
+          pip install -r requirements.txt
 
-      - name: Configurar autenticação com GCP
+      - name: Rodar testes unitários e de integração
+        run: |
+          export PYTHONPATH=$PWD
+          pytest --maxfail=3 --disable-warnings -v --junitxml=report.xml
+
+  sonarqube:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@v2
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=log-agent-backend
+            -Dsonar.sources=.
+            -Dsonar.python.coverage.reportPaths=report.xml
+            -Dsonar.organization=aggosistemas
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  build-push:
+    runs-on: ubuntu-latest
+    needs: sonarqube
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Login no Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+
+      - name: Build e Push da imagem Docker
+        run: |
+          docker build -t $DOCKER_HUB_REPO:latest .
+          docker push $DOCKER_HUB_REPO:latest
+
+  deploy-gke:
+    runs-on: ubuntu-latest
+    needs: build-push
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Autenticar no GCP
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Configurar kubectl
+      - name: Configurar acesso ao cluster GKE
         uses: google-github-actions/get-gke-credentials@v1
         with:
-          cluster_name: ${{ env.CLUSTER_NAME }}
-          location: ${{ env.CLUSTER_REGION }}
-          project_id: ${{ env.PROJECT_ID }}
+          cluster_name: cluster-kubernetes-padrao
+          location: us-central1
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Criar ou atualizar Secret GCP no cluster
         run: |
@@ -46,7 +98,7 @@ jobs:
             --from-file=gcp-sa-key.json=./gcp-sa-key.json \
             --from-literal=GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
 
-      - name: Aplicar Deployment e Service
+      - name: Aplicar deployment no GKE
         run: |
           kubectl apply -f deployment.yaml
           kubectl apply -f service.yaml
