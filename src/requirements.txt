@@ -1,3 +1,4 @@
+# Bibliotecas Google Cloud Firestore
 cachetools==5.5.2
 certifi==2025.6.15
 charset-normalizer==3.4.2
@@ -16,3 +17,8 @@ pyasn1_modules==0.4.2
 requests==2.32.4
 rsa==4.9.1
 urllib3==2.5.0
+
+# Testes
+pytest==8.2.2
+pytest-mock==3.14.0
+coverage==7.5.3

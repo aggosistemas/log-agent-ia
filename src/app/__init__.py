@@ -1,0 +1,1 @@
+from .app import app  # Importa o objeto app para facilitar o import externo

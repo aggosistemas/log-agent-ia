@@ -13,7 +13,7 @@ def get_firestore_client():
     return firestore.Client(project=PROJECT_ID, credentials=credentials)
 
 # Função para salvar um log no Firestore
-def salvar_log_pipeline(data: dict):
+def salvar_log(data: dict):
     client = get_firestore_client()
     collection_ref = client.collection("logs_pipeline")
 
