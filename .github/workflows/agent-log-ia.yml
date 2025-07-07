@@ -1,4 +1,4 @@
-name: CI/CD Pipeline para Log Agent
+name: Pipeline para Log Agent
 
 on:
   push:
