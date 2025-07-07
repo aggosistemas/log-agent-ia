@@ -48,7 +48,7 @@ jobs:
 
       - name: Build e Push da imagem Docker
         run: |
-          docker build -t $DOCKER_HUB_REPO:latest .
+          docker build --no-cache -t $DOCKER_HUB_REPO:latest .
           docker push $DOCKER_HUB_REPO:latest
 
   deploy-gke:
