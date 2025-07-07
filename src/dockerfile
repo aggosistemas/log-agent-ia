@@ -13,7 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Expor a porta da aplicação Flask
 EXPOSE 5000
 
-# Definir variável de ambiente do Flask
+# Definir variável de ambiente do flask
 ENV FLASK_APP=app.app
 
 # Comando para iniciar a aplicação Flask
