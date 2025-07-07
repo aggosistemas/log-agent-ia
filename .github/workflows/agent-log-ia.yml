@@ -49,6 +49,7 @@ jobs:
             -Dsonar.sources=.
             -Dsonar.python.coverage.reportPaths=report.xml
             -Dsonar.organization=aggosistemas
+            -Dsonar.branch.name=main
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
