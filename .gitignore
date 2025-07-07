@@ -211,7 +211,7 @@ __marimo__/
 docker-compose.override.yml
 .docker/
 .dockerignore
-Dockerfile.*
+
 
 # Docker volumes (caso montados localmente)
 volumes/
