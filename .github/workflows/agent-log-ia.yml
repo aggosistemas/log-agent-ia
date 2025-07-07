@@ -1,4 +1,4 @@
-name: Pipeline para Log Agent
+name: Pipeline para Log Agent IA
 
 on:
   push:
