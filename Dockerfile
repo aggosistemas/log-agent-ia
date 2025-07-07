@@ -1,17 +1,17 @@
 # Usar imagem oficial do Python
 FROM python:3.10-slim
 
-# Definir diretório de trabalho dentro do container
+# Diretório de trabalho
 WORKDIR /app
 
-# Copiar arquivos do projeto
+# Copiar todos os arquivos
 COPY . .
 
 # Instalar dependências
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expor a porta da aplicação Flask
+# Expor a porta usada pelo Flask
 EXPOSE 5000
 
-# Comando para iniciar a aplicação Flask
+# Executar diretamente o app com Python
 CMD ["python", "app/app.py"]
