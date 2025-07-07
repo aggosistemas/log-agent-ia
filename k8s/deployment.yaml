@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: log-agent-backend
-          image: docker.io/aggosistemas/log-agent-backend: latest
+          image: docker.io/aggosistemas/log-agent-backend:latest
           ports:
             - containerPort: 5000
           env:
