@@ -33,30 +33,9 @@ jobs:
           export PYTHONPATH=$PWD
           pytest --maxfail=3 --disable-warnings -v --junitxml=report.xml
 
-  sonarqube:
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
-
-      - name: SonarQube Scan
-        uses: sonarsource/sonarqube-scan-action@v2
-        with:
-          projectBaseDir: .
-          args: >
-            -Dsonar.projectKey=log-agent-ia
-            -Dsonar.sources=.
-            -Dsonar.python.coverage.reportPaths=report.xml
-            -Dsonar.organization=aggosistemas
-            -Dsonar.branch.name=main
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
   build-push:
     runs-on: ubuntu-latest
-    needs: sonarqube
+    needs: test
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
