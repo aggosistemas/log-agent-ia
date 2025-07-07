@@ -45,7 +45,7 @@ jobs:
         with:
           projectBaseDir: .
           args: >
-            -Dsonar.projectKey=log-agent-backend
+            -Dsonar.projectKey=log-agent-ia
             -Dsonar.sources=.
             -Dsonar.python.coverage.reportPaths=report.xml
             -Dsonar.organization=aggosistemas
