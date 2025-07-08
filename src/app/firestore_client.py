@@ -1,27 +1,22 @@
-import os
-import json
 from google.cloud import firestore
-from google.oauth2 import service_account
+import os
 
-# Caminho para as credenciais da service account (pode ser alterado conforme o ambiente)
-CREDENTIALS_FILE = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "gcp-sa-key.json")
-PROJECT_ID = os.getenv("GCP_PROJECT_ID", "seu-projeto-id")
-
-# Inicializa o cliente Firestore com as credenciais
 def get_firestore_client():
-    # No GKE, o Client já usa as credenciais do workload identity
-    return firestore.Client(project=os.getenv('GCP_PROJECT_ID'))
+    """Retorna um cliente do Firestore configurado"""
+    project_id = os.getenv('GCP_PROJECT_ID')
+    if not project_id:
+        raise ValueError("Variável GCP_PROJECT_ID não configurada")
+    return firestore.Client(project=project_id)
 
-# Função para salvar um log no Firestore
-def salvar_log(data: dict):
-    client = get_firestore_client()
-    data["created_at"] = firestore.SERVER_TIMESTAMP
-    doc_ref = client.collection("logs_pipeline").add(data)
-    return doc_ref[1].id
-
-    # Adiciona campo de timestamp
-    data["created_at"] = firestore.SERVER_TIMESTAMP
-
-    doc_ref = collection_ref.add(data)
-    print(f"Documento criado com ID: {doc_ref[1].id}")
-    return doc_ref[1].id
+def salvar_log(data: dict) -> str:
+    """Salva um documento no Firestore e retorna o ID gerado"""
+    if not data or not isinstance(data, dict):
+        raise ValueError("Dados inválidos para o log")
+    
+    try:
+        client = get_firestore_client()
+        data["created_at"] = firestore.SERVER_TIMESTAMP
+        doc_ref = client.collection("logs_pipeline").add(data)
+        return doc_ref[1].id
+    except Exception as e:
+        raise  # Repassa a exceção original sem modificação
