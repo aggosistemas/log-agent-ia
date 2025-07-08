@@ -2,8 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: log-agent-backend
-  labels:
-    app: log-agent-backend
 spec:
   replicas: 1
   selector:
@@ -14,11 +12,18 @@ spec:
       labels:
         app: log-agent-backend
     spec:
+      serviceAccountName: log-agent-backend  # Adicionado
       containers:
         - name: log-agent-backend
           image: docker.io/aggosistemas/log-agent-backend:latest
           ports:
             - containerPort: 5000
           env:
-            - name: ENV
-              value: "development"
+            - name: FLASK_ENV
+              value: "production"
+            - name: GCP_PROJECT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: gcp-secrets
+                  key: project-id
+          # Removido volumeMounts e volumes (não necessário com Workload Identity)

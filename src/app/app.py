@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from app.firestore_client import salvar_log
+from src.app.firestore_client import salvar_log
 
 app = Flask(__name__)
 
@@ -16,5 +16,5 @@ def receber_log():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000 debug=True)
 
