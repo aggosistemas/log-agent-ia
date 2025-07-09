@@ -1,18 +1,7 @@
-# Flask app
-flask==2.3.3
-
-# Firestore integration
-google-cloud-firestore==2.21.0
-google-auth==2.40.3
-google-auth-oauthlib==1.2.0
-google-auth-httplib2==0.2.0
-
-# Testes
-pytest==8.4.1
-
-flask>=2.0.0
-gunicorn>=20.0.0
-google-cloud-firestore>=2.0.0
-
+Flask==2.3.3
+gunicorn==21.2.0
+google-cloud-firestore==2.13.0
+python-dotenv==1.0.1
+pandas==2.2.2
 openai>=1.0.0
-python-dotenv
+pytest==8.2.1

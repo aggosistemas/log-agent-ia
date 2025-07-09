@@ -237,3 +237,5 @@ __pycache__/
 *.pyd
 node_modules/
 dist/
+
+logs_agrupados_*.csv

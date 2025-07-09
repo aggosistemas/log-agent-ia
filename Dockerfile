@@ -1,15 +1,27 @@
-from flask import Flask
-from app.chat_controller import chat_bp
+FROM python:3.10-slim
 
-app = Flask(__name__)
+WORKDIR /app
 
-# Rotas registradas via Blueprint
-app.register_blueprint(chat_bp)
+# Copiar dependências primeiro para aproveitar cache
+COPY src/requirements.txt .
 
-# Rota de verificação de saúde
-@app.route("/health")
-def health_check():
-    return "OK", 200
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install gunicorn
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+# Copiar todo o código da aplicação
+COPY src/ ./src/
+
+# Variáveis de ambiente
+ENV PYTHONPATH=/app/src
+ENV FLASK_APP=src.app.app
+
+# Porta usada pelo Cloud Run
+EXPOSE 8080
+
+# Comando para produção
+CMD ["gunicorn", "-b", "0.0.0.0:8080", "app.app:app"]
+
+# Healthcheck (opcional, mas boa prática)
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD curl -f http://localhost:8080/health || exit 1
