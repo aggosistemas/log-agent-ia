@@ -1,22 +1,22 @@
 from flask import Blueprint, request, jsonify
-from firestore.consultar_sumarios import buscar_sumarios_recentes
-from llm.responder import responder_ia
+from src.firestore.consultar_sumarios import buscar_sumarios_recentes
+from src.llm.responder import responder_ia
 
 chat_bp = Blueprint("chat", __name__)
 
 @chat_bp.route("/chat", methods=["POST"])
-def chat():
+def responder_chat():
     try:
-        data = request.get_json()
-        pergunta = data.get("mensagem")
+        dados = request.get_json()
+        pergunta = dados.get("mensagem")
 
         if not pergunta:
-            return jsonify({"erro": "Campo 'mensagem' é obrigatório"}), 400
+            return jsonify({"erro": "Mensagem não fornecida"}), 400
 
         sumarios = buscar_sumarios_recentes(limit=5)
-        resposta = responder_ia(pergunta, sumarios)
+        contexto = "\n".join([f"{s['timestamp']}: {s['sumario']}" for s in sumarios])
 
-        return jsonify({"resposta": resposta}), 200
-
+        resposta = responder_ia(pergunta, contexto)
+        return jsonify({"resposta": resposta})
     except Exception as e:
         return jsonify({"erro": f"Erro interno: {str(e)}"}), 500
