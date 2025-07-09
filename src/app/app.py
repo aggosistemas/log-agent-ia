@@ -1,7 +1,7 @@
 from flask import Flask
-from src.app.chat_controller import chat_bp
-from src.app.log_processor import process_log_entry
-from src.app.firestore_client import salvar_log
+from app.chat_controller import chat_bp
+from app.log_processor import process_log_entry
+from app.firestore_client import salvar_log
 from flask import request, jsonify
 
 app = Flask(__name__)
