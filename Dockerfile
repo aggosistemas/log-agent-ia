@@ -1,26 +1,15 @@
-FROM python:3.10-slim
+from flask import Flask
+from app.chat_controller import chat_bp
 
-WORKDIR /app
+app = Flask(__name__)
 
-# Copia os requirements
-COPY src/requirements.txt .
+# Rotas registradas via Blueprint
+app.register_blueprint(chat_bp)
 
-# Instala dependências
-RUN pip install --no-cache-dir -r requirements.txt \
-    && pip install gunicorn
+# Rota de verificação de saúde
+@app.route("/health")
+def health_check():
+    return "OK", 200
 
-# Copia o código da aplicação
-COPY src/ ./src/
-
-# Define o caminho do módulo
-ENV PYTHONPATH=/app/src
-
-# Expõe a porta que o app escuta
-EXPOSE 8080
-
-# Usa gunicorn como servidor de produção
-CMD ["gunicorn", "-b", "0.0.0.0:8080", "app.app:app"]
-
-# Verifica a saúde da aplicação a cada 30s
-HEALTHCHECK --interval=30s --timeout=3s \
-  CMD curl -f http://localhost:8080/health || exit 1
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)

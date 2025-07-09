@@ -1,4 +1,4 @@
-name: Testes, Build e Deploy no Cloud Run
+name: Build e Deploy no Cloud Run
 
 on:
   push:
@@ -18,19 +18,17 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Configurar Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
       - name: Instalar dependências
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install pytest
 
-      - name: Rodar testes com pytest
+      - name: Rodar testes automatizados
+        env:
+          OPENAI_API_KEY: dummy-key
         run: |
-          PYTHONPATH=src pytest src/test/
+          PYTHONPATH=src pytest src/test/ --disable-warnings -v
 
   build:
     runs-on: ubuntu-latest
@@ -75,7 +73,13 @@ jobs:
           region: ${{ secrets.CLOUD_RUN_REGION }}
           env_vars: |
             GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
 
+  log:
+    runs-on: ubuntu-latest
+    needs: deploy
+
+    steps:
       - name: Enviar log da pipeline para API IA
         if: always()
         run: |
@@ -84,6 +88,6 @@ jobs:
             -d '{
               "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
               "nivel": "${{ job.status }}",
-              "mensagem": "Pipeline concluída: ${{ job.status }}",
+              "mensagem": "Deploy via GitHub Actions: ${{ job.status }}",
               "servico": "pipeline-cloudrun"
             }'

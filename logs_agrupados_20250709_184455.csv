@@ -1,0 +1,6 @@
+timestamp,servico,mensagem,created_at,nivel,doc_id
+2025-07-09 18:24:06+00:00,pipeline-cloudrun,Deploy via GitHub Actions: success,2025-07-09 18:24:08.523000+00:00,success,81w3zw5j6e6Vqb8seAX0
+2025-07-09 18:03:16+00:00,pipeline-cloudrun,Deploy via GitHub Actions: failure,2025-07-09 18:03:16.445000+00:00,failure,KtHDxP78Owcsk4QPHucM
+2025-07-09 17:59:40+00:00,pipeline-cloudrun,Deploy via GitHub Actions: failure,2025-07-09 17:59:40.902000+00:00,failure,fJkij1G8cisepqfbZzdo
+2025-07-09 18:05:52+00:00,pipeline-cloudrun,Deploy via GitHub Actions: success,2025-07-09 18:05:56.072000+00:00,success,oRSsm1YWgCA7cdw2FBNt
+2025-07-09 18:29:32+00:00,pipeline-cloudrun,Pipeline concluída: success,2025-07-09 18:29:34.945000+00:00,success,qbTkQ5wXRSBPas6VFQQB
