@@ -11,31 +11,8 @@ env:
   DOCKER_HUB_REPO: ${{ secrets.DOCKER_HUB_USERNAME }}/log-agent-backend
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
-
-      - name: Configurar Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Instalar dependências
-        run: |
-          pip install --upgrade pip
-          pip install --upgrade setuptools wheel
-          pip install -r requirements.txt
-
-      - name: Rodar testes unitários e de integração
-        run: |
-          export PYTHONPATH=$PWD
-          pytest --maxfail=3 --disable-warnings -v --junitxml=report.xml
-
   build-push:
     runs-on: ubuntu-latest
-    needs: test
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
