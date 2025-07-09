@@ -9,6 +9,8 @@ app = Flask(__name__)
 
 @app.route("/logs", methods=["POST"])
 def receive_log():
+    from app.firestore_client import salvar_log
+    from app.log_processor import process_log_entry
     try:
         log_entry = request.get_json()
         processed_log = process_log_entry(log_entry)
