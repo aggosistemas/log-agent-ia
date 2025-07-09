@@ -1,5 +1,6 @@
 from flask import Flask
-from chat_controller import chat_bp
+from app.chat_controller import chat_bp
+
 
 app = Flask(__name__)
 
