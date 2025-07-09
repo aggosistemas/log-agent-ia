@@ -1,4 +1,4 @@
-name: Build e Deploy no Cloud Run
+name: Testes, Build e Deploy no Cloud Run
 
 on:
   push:
@@ -11,8 +11,30 @@ env:
   DOCKER_HUB_REPO: ${{ secrets.DOCKER_HUB_USERNAME }}/log-agent-backend
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Instalar dependências
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Rodar testes com pytest
+        run: |
+          PYTHONPATH=src pytest src/test/
+
   build:
     runs-on: ubuntu-latest
+    needs: test
 
     steps:
       - name: Checkout do código
@@ -62,6 +84,6 @@ jobs:
             -d '{
               "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
               "nivel": "${{ job.status }}",
-              "mensagem": "Deploy via GitHub Actions: ${{ job.status }}",
+              "mensagem": "Pipeline concluída: ${{ job.status }}",
               "servico": "pipeline-cloudrun"
             }'
