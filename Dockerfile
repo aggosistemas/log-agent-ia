@@ -1,27 +1,25 @@
+# Imagem base leve com Python
 FROM python:3.10-slim
 
+# Diretório de trabalho
 WORKDIR /app
 
-# Copiar dependências primeiro para aproveitar cache
+# Copia as dependências
 COPY src/requirements.txt .
 
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt && \
+# Instala as dependências do projeto
+RUN pip install --no-cache-dir -r requirements.txt && \
     pip install gunicorn
 
-# Copiar todo o código da aplicação
+# Copia todo o código-fonte para o contêiner
 COPY src/ ./src/
 
-# Variáveis de ambiente
+# Define variáveis de ambiente
 ENV PYTHONPATH=/app/src
 ENV FLASK_APP=src.app.app
 
-# Porta usada pelo Cloud Run
+# Expõe a porta padrão para Cloud Run
 EXPOSE 8080
 
-# Comando para produção
+# Comando de inicialização com Gunicorn
 CMD ["gunicorn", "-b", "0.0.0.0:8080", "app.app:app"]
-
-# Healthcheck (opcional, mas boa prática)
-HEALTHCHECK --interval=30s --timeout=3s \
-  CMD curl -f http://localhost:8080/health || exit 1
