@@ -1,10 +1,13 @@
 from flask import Flask, request, jsonify, render_template_string
+from flask_cors import CORS
+
 from app.log_processor import process_log_entry
 from app.firestore_client import salvar_log
 from firestore.consultar_sumarios import buscar_sumarios_recentes
 from llm.responder import responder_ia
 
 app = Flask(__name__)
+CORS(app)  # Permite CORS para todas as rotas e origens
 
 # HTML simples para interação com o chat
 HTML_PAGE = """
