@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Teste CORS</title>
+</head>
+<body>
+  <h2>Teste CORS para /logs</h2>
+  <button onclick="enviarLog()">Enviar POST para /logs</button>
+
+  <script>
+    function enviarLog() {
+      fetch('https://log-agent-backend-641937239209.us-central1.run.app/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ mensagem: 'Teste CORS via navegador' })
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Resposta:', data);
+        alert('Requisição enviada com sucesso!');
+      })
+      .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro na requisição!');
+      });
+    }
+  </script>
+</body>
+</html>

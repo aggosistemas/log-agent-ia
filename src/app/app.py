@@ -1,71 +1,101 @@
-from flask import Flask, request, jsonify, render_template_string
-from flask_cors import CORS
+# app.py
+from __future__ import annotations
 
-from app.log_processor import process_log_entry
-from app.firestore_client import salvar_log
-from firestore.consultar_sumarios import buscar_sumarios_recentes
-from llm.responder import responder_ia
+import hashlib
+import json
+import logging
+import os
+from datetime import datetime, timezone
+from typing import Any, Dict
+
+from flask import Flask, jsonify, request
+
+from firestore_client import save_pipeline_log
 
 app = Flask(__name__)
-CORS(app)  # Permite CORS para todas as rotas e origens
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+logger = logging.getLogger("pequi-logs")
 
-# HTML simples para interação com o chat
-HTML_PAGE = """
-<!DOCTYPE html>
-<html>
-<head>
-  <title>IA Log Agent</title>
-</head>
-<body>
-  <h1>Chat com o Agente de IA</h1>
-  <form method="post" action="/chat">
-    <input type="text" name="mensagem" placeholder="Digite sua pergunta" style="width: 300px;" />
-    <button type="submit">Enviar</button>
-  </form>
-  {% if resposta %}
-    <p><strong>Resposta:</strong> {{ resposta }}</p>
-  {% endif %}
-</body>
-</html>
-"""
 
-@app.route("/logs", methods=["POST"])
-def receive_log():
+def _sha256(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _ensure_stack_hash(payload: Dict[str, Any]) -> None:
+    """Gera stack_hash se não vier no payload."""
+    if payload.get("stack_hash"):
+        return
+    repo = payload.get("repo", "")
+    workflow = payload.get("workflow", "")
+    job = payload.get("job", "")
+    status = payload.get("status", "")
+    git_sha = str(payload.get("git_sha", ""))[:8]
+    base = f"{repo}|{workflow}|{job}|{status}|{git_sha}"
+    payload["stack_hash"] = _sha256(base)
+
+
+def _ensure_defaults(payload: Dict[str, Any]) -> None:
+    """Campos padrão amistosos para o contrato."""
+    payload.setdefault("service", "github-actions")
+    payload.setdefault("mensagem_curta", f"Execução {payload.get('status','').lower()} em {payload.get('workflow','')}/{payload.get('job','')}")
+    payload.setdefault("tipo_erro", "BUILD")
+
+    # timestamp de origem (informativo)
+    if not payload.get("timestamp"):
+        payload["timestamp"] = datetime.now(timezone.utc).isoformat()
+
+
+@app.get("/health")
+def health():
+    return jsonify({"ok": True, "service": "pequi-logs-bridge"}), 200
+
+
+@app.post("/logs")
+def ingest_logs():
+    """
+    Recebe um JSON (objeto) com dados do pipeline.
+    - Gera stack_hash se faltar.
+    - Completa defaults do contrato.
+    - Persiste em Firestore somente quando status == 'failure'.
+    Respostas:
+      * 201 -> persistido (OK)
+      * 202 -> ignorado (não-falha)
+      * 400 -> payload inválido
+      * 500 -> erro interno
+    """
     try:
-        log_entry = request.get_json()
-        processed_log = process_log_entry(log_entry)
-        salvar_log(processed_log)
-        return jsonify({"status": "Log processed and stored"}), 201
+        if not request.data:
+            return jsonify({"error": "payload vazio"}), 400
+
+        try:
+            payload = request.get_json(force=True, silent=False)
+        except Exception:
+            # loga amostra para debugging
+            sample = request.data[:200].decode("utf-8", errors="ignore")
+            logger.exception("JSON inválido recebido. Amostra=%s", sample)
+            return jsonify({"error": "JSON inválido"}), 400
+
+        if not isinstance(payload, dict):
+            return jsonify({"error": "esperado objeto JSON"}), 400
+
+        # Enriquecimento leve no bridge
+        _ensure_stack_hash(payload)
+        _ensure_defaults(payload)
+
+        status, info = save_pipeline_log(payload)
+
+        if status == "IGNORED":
+            # Não é falha → não persiste (mas retorna 202 para não quebrar a pipeline)
+            return jsonify({"status": "ignored", "reason": info}), 202
+
+        # Persistido
+        return jsonify({"status": "ok", "doc_id": info}), 201
+
     except Exception as e:
-        app.logger.error(f"Erro ao processar o log: {e}")
-        return jsonify({"error": "Erro interno"}), 500
+        logger.exception("Erro ao processar /logs: %s", e)
+        return jsonify({"error": "erro_interno", "detail": str(e)}), 500
 
-@app.route("/chat", methods=["POST"])
-def chat_post():
-    try:
-        if request.is_json:
-            data = request.get_json()
-            pergunta = data.get("mensagem", "")
-        else:
-            pergunta = request.form.get("mensagem", "")
-
-        if not pergunta:
-            return jsonify({"erro": "Campo 'mensagem' é obrigatório"}), 400
-
-        contexto = buscar_sumarios_recentes()
-        resposta = responder_ia(pergunta, contexto)
-
-        if request.is_json:
-            return jsonify({"resposta": resposta})
-        else:
-            return render_template_string(HTML_PAGE, resposta=resposta)
-    except Exception as e:
-        app.logger.error(f"Erro no chat: {e}")
-        return jsonify({"erro": f"Erro interno: {str(e)}"}), 500
-
-@app.route("/", methods=["GET"])
-def home():
-    return render_template_string(HTML_PAGE)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    # Para rodar local: `python app.py`
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "8080")))
